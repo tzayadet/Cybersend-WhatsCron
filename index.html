@@ -1231,10 +1231,24 @@ function openWaLink(phone, msg){
   log(`Opening WhatsApp for manual hand-off → +${phone}`, 'warn');
 }
 
-function cancelMsg(id){
+async function cancelMsg(id){
   const m = state.messages.find(x => x.id === id);
   if(!m) return;
-  m.status = 'CANCELLED';
+
+  if(state.useBackend){
+    try {
+      const response = await fetch(state.apiBase + '/api/messages/' + id + '/cancel', {method:'POST'});
+      if(!response.ok) throw new Error('HTTP ' + response.status);
+      Object.assign(m, await response.json());
+    } catch(error) {
+      log('Cancellation failed: ' + error.message, 'error');
+      toast('Backend error: ' + error.message, 'error');
+      return;
+    }
+  } else {
+    m.status = 'CANCELLED';
+  }
+
   renderMessages();
   updateStats();
   log(`Cancelled transmission #${id}`, 'warn');
@@ -1252,7 +1266,7 @@ function scheduleLocalCheck(){
 }
 
 function checkDueMessages(){
-  if(state.useBackend) return;
+  if(state.useBackend){ loadFromBackend(); return; }
   const now = new Date();
   state.messages.forEach(m => {
     if(m.status === 'PENDING' && new Date(m.scheduledAt) <= now){
@@ -1315,6 +1329,7 @@ async function loadFromBackend(){
     state.messages = msgs;
     renderMessages();
     updateSessionUI(sess);
+    updateStats();
     log(`Loaded ${msgs.length} messages from backend`, 'success');
   } catch(e){ log('Failed to load from backend: ' + e.message, 'error'); }
 }
