@@ -45,6 +45,9 @@ public class MessageSchedulerService {
 
     @Transactional
     public void processMessage(ScheduledMessage msg) {
+        if (msg.getStatus() != ScheduledMessage.MessageStatus.PENDING) {
+            return;
+        }
         msg.setStatus(ScheduledMessage.MessageStatus.SENDING);
         messageRepository.save(msg);
         broadcastMessageUpdate(msg);
@@ -91,6 +94,9 @@ public class MessageSchedulerService {
     public ScheduledMessage sendNow(Long id) {
         ScheduledMessage msg = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Message not found: " + id));
+        if (msg.getStatus() != ScheduledMessage.MessageStatus.PENDING) {
+            return msg;
+        }
         msg.setScheduledAt(LocalDateTime.now());
         messageRepository.save(msg);
         processMessage(msg);
