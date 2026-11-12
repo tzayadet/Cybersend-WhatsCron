@@ -1,6 +1,12 @@
 # CyberSend | WhatsApp Scheduler
 
+[![Java CI](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml) [![GitHub Pages](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml)
+
 Aplicación experimental para planificar mensajes, gestionar una cola local y generar enlaces `wa.me` para completar manualmente el envío.
+
+**Demo estática:** [CyberSend Scheduler](https://tzayadet.github.io/Cybersend-WhatsCron/) · **Código:** [repositorio](https://github.com/tzayadet/Cybersend-WhatsCron)
+
+La demo pública presenta la interfaz HTML. No ejecuta el backend Spring Boot ni conecta con WhatsApp.
 
 ## Estado real
 
