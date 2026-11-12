@@ -52,8 +52,8 @@ public class WhatsAppService {
                 .orElse(new WhatsAppSession());
 
         session.setSessionId(DEFAULT_SESSION);
-        session.setStatus(WhatsAppSession.SessionStatus.QR_PENDING);
-        session.setQrCode(generateSimulatedQRData());
+        session.setStatus(WhatsAppSession.SessionStatus.SIMULATED);
+        session.setQrCode(null);
         session = sessionRepository.save(session);
 
         // Notify connected clients via WebSocket
@@ -148,9 +148,4 @@ public class WhatsAppService {
         messagingTemplate.convertAndSend("/topic/session-status", payload);
     }
 
-    private String generateSimulatedQRData() {
-        // In production: actual QR data from whatsapp-web.js
-        return "2@" + UUID.randomUUID().toString().replace("-", "").substring(0, 32)
-                + "," + UUID.randomUUID().toString().replace("-", "");
-    }
 }
