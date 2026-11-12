@@ -1,15 +1,20 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/MESSAGING_AUTOMATION-CYBERSEND_WHATSCRON-101010?style=for-the-badge&labelColor=050805&color=00FF41" alt="CyberSend"/>
+  <img src="https://img.shields.io/badge/JAVA-SPRING_BOOT-101010?style=for-the-badge&logo=springboot&logoColor=00FF41" alt="Spring Boot"/>
+</p>
+
 # CyberSend · WhatsCron
 
-A scheduling prototype for composing messages, managing a local queue and generating `wa.me` links for manual sending.
+Scheduling prototype for composing messages, managing a local queue and generating `wa.me` links for manual sending.
 
 <p align="center">
-  <a href="https://tzayadet.github.io/Cybersend-WhatsCron/"><img src="https://img.shields.io/badge/STATIC_DEMO-OPEN-00a86b?style=flat-square" alt="Static demo"></a>
-  <a href="https://github.com/tzayadet/Cybersend-WhatsCron"><img src="https://img.shields.io/badge/SOURCE-GITHUB-161b22?style=flat-square&logo=github" alt="Source"></a>
+  <a href="https://tzayadet.github.io/Cybersend-WhatsCron/"><strong>STATIC DEMO ↗</strong></a> ·
+  <a href="https://github.com/tzayadet/Cybersend-WhatsCron"><strong>SOURCE CODE</strong></a>
 </p>
 
 [![Java CI](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml) · [![Static deployment](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml)
 
-> Prototype status: it does not send messages automatically through WhatsApp. Scheduled items requiring delivery move to `AWAITING_MANUAL` and generate a link for a person to complete the action.
+> It does not send messages automatically through WhatsApp. Scheduled items requiring delivery move to `AWAITING_MANUAL` and generate a link for a person to complete the action.
 
 ## Components
 
@@ -21,8 +26,8 @@ The public Pages demo is a static interface. It does not run the Spring Boot bac
 
 ## Requirements
 
-- Java 17 or later
-- Maven 3.8 or later
+- Java 17+
+- Maven 3.8+
 
 ## Run locally
 
@@ -55,13 +60,13 @@ Relevant environment variables include:
 - Session and QR states are simulated; the QR graphic is not scannable.
 - No delivery or read receipt is guaranteed.
 - Messages requiring human action remain `AWAITING_MANUAL`.
-- The API is a prototype and must not be exposed publicly without authentication, authorization and appropriate request protections.
-- Local H2 storage is not a multi-user or high-availability database.
+- The API is a prototype and must not be exposed publicly without authentication, authorisation and appropriate request protections.
+- Local H2 storage is intended for development, not production use.
 
 ## Deployment
 
-GitHub Pages publishes the static frontend only. A deployed backend would require a separate Java hosting environment and a properly authorised messaging provider integration.
+GitHub Pages serves only the static frontend. The Spring Boot backend requires a separate Java-compatible host.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+See [LICENSE](LICENSE) for the repository's licensing terms.
