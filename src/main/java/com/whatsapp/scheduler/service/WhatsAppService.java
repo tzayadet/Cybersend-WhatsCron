@@ -58,7 +58,7 @@ public class WhatsAppService {
 
         // Notify connected clients via WebSocket
         broadcastSessionStatus(session);
-        log.info("WhatsApp session initiated: {}", session.getSessionId());
+        log.info("Simulated WhatsApp session initiated: {}", session.getSessionId());
         return session;
     }
 
@@ -71,7 +71,7 @@ public class WhatsAppService {
                 .orElse(new WhatsAppSession());
 
         session.setSessionId(DEFAULT_SESSION);
-        session.setStatus(WhatsAppSession.SessionStatus.CONNECTED);
+        session.setStatus(WhatsAppSession.SessionStatus.SIMULATED);
         session.setPhoneNumber(phoneNumber);
         session.setConnectedAt(LocalDateTime.now());
         session.setLastActive(LocalDateTime.now());
