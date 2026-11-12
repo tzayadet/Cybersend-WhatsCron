@@ -4,7 +4,7 @@ Aplicación experimental para planificar mensajes, gestionar una cola local y ge
 
 ## Estado real
 
-**Prototipo local. No realiza envíos automáticos a WhatsApp.**
+**Prototipo local. No realiza envíos automáticos a WhatsApp.** Los mensajes que llegan a su hora pasan a `AWAITING_MANUAL`, se abre un enlace `wa.me` y nunca se contabilizan como enviados sin un proveedor real que confirme la entrega.
 
 El backend Spring Boot mantiene mensajes programados y expone una API REST/WebSocket. La integración de transporte con WhatsApp no está implementada. La sesión y el QR son simulados. El sistema no debe marcar un mensaje como entregado: cuando no existe un proveedor real, conserva el estado pendiente y genera un enlace para que una persona complete el envío.
 
@@ -21,8 +21,16 @@ El backend Spring Boot mantiene mensajes programados y expone una API REST/WebSo
 
 ## Ejecución local
 
+Requiere Java 17 y Maven 3.8 o superior. El backend sigue la estructura estándar de Maven (`src/main/java`).
+
 ```bash
 mvn spring-boot:run
+```
+
+Para compilar y ejecutar las pruebas:
+
+```bash
+mvn --batch-mode verify
 ```
 
 Por defecto, el servidor escucha en `127.0.0.1:8080`. No lo expongas a Internet: las rutas de gestión todavía no tienen un sistema completo de autenticación y autorización.
@@ -41,9 +49,10 @@ Las variables configurables incluyen:
 ## Limitaciones conocidas
 
 - No hay integración real con WhatsApp Web ni con WhatsApp Business Platform.
-- El estado de sesión y el QR son simulaciones.
-- La API no debe desplegarse en redes públicas hasta implementar autenticación, autorización, validación de origen y protección CSRF donde corresponda.
-- El planificador no proporciona garantías de entrega ni confirmación de lectura.
+- El estado de sesión se marca como `SIMULATED`; el QR de la interfaz es un patrón visual de demostración, no un código escaneable.
+- La API no debe desplegarse en redes públicas hasta implementar autenticación, autorización y protección CSRF donde corresponda. CORS y WebSocket aceptan únicamente los orígenes definidos en `CORS_ALLOWED_ORIGINS`.
+- El planificador no proporciona garantías de entrega ni confirmación de lectura. Los estados `SENT` solo se reservan para un envío confirmado por un proveedor real.
+- Los mensajes que requieren intervención humana pasan a `AWAITING_MANUAL` y dejan de reintentarse automáticamente cada 30 segundos.
 - Los datos locales H2 no son una solución multiusuario ni de alta disponibilidad.
 
 ## Licencia
