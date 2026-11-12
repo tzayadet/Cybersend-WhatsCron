@@ -31,7 +31,7 @@ public class WhatsAppSession {
     private String qrCode;
 
     public enum SessionStatus {
-        DISCONNECTED, QR_PENDING, CONNECTED, ERROR
+        DISCONNECTED, QR_PENDING, SIMULATED, CONNECTED, ERROR
     }
 
     // Getters and Setters
