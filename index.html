@@ -326,6 +326,7 @@
   }
 
   .msg-item.PENDING::before { background: var(--amber); }
+  .msg-item.AWAITING_MANUAL::before { background: var(--cyan); }
   .msg-item.SENT::before { background: var(--green); }
   .msg-item.FAILED::before { background: var(--red); }
   .msg-item.CANCELLED::before { background: #444; }
@@ -356,6 +357,7 @@
   }
 
   .badge-PENDING { border: 1px solid var(--amber); color: var(--amber); }
+  .badge-AWAITING_MANUAL { border: 1px solid var(--cyan); color: var(--cyan); }
   .badge-SENT { border: 1px solid var(--green); color: var(--green); }
   .badge-FAILED { border: 1px solid var(--red); color: var(--red); }
   .badge-CANCELLED { border: 1px solid #555; color: #555; }
@@ -987,6 +989,13 @@ function updateSessionUI(sess){
     connTxt.textContent = 'CONNECTED';
     document.getElementById('btn-connect').style.display = 'none';
     document.getElementById('btn-disconnect').style.display = 'block';
+  } else if(st === 'SIMULATED'){
+    txt.classList.add('status-pending');
+    txt.textContent = '◉ DEMO ONLY';
+    dot.className = 'dot amber';
+    connTxt.textContent = 'SIMULATED';
+    document.getElementById('btn-connect').style.display = 'block';
+    document.getElementById('btn-disconnect').style.display = 'block';
   } else if(st === 'QR_PENDING'){
     txt.classList.add('status-pending');
     txt.textContent = '◉ QR PENDING';
@@ -1064,7 +1073,7 @@ function initQR(){
   drawFakeQR('modal-qr', data);
   drawFakeQR('qr-canvas', data);
   document.getElementById('qr-placeholder').style.display = 'none';
-  log('QR code generated — scan with WhatsApp', 'warn');
+  log('QR visual placeholder generated. It is not a scannable WhatsApp QR.', 'warn');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1112,11 +1121,12 @@ function selectMessage(id){
     <div style="border:1px solid var(--border);padding:8px;font-size:12px;margin-bottom:12px;background:var(--bg2)">
       ${escHtml(m.messageContent)}
     </div>
-    ${m.status==='PENDING' ? `
+    ${['PENDING','AWAITING_MANUAL'].includes(m.status) ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
-      <button class="btn btn-cyan btn-small" style="width:100%" onclick="sendNowLocal(${m.id})">⚡ NOW</button>
+      ${m.status==='PENDING' ? `<button class="btn btn-cyan btn-small" style="width:100%" onclick="sendNowLocal(${m.id})">⚡ NOW</button>` : `<span style="font-size:9px;color:var(--cyan);align-self:center">MANUAL HAND-OFF</span>`}
       <button class="btn btn-red btn-small" style="width:100%" onclick="cancelMsg(${m.id})">✕ CANCEL</button>
     </div>` : ''}
+    ${m.status==='AWAITING_MANUAL' ? `<div style="font-size:10px;color:var(--amber);margin-bottom:10px">Delivery is not confirmed. Complete the send in WhatsApp manually.</div>` : ''}
     <a href="${waLink}" target="_blank" class="btn btn-cyan" style="display:block;text-decoration:none;font-size:9px;text-align:center">
       OPEN IN WHATSAPP ↗
     </a>
@@ -1177,16 +1187,33 @@ function sendNowDirect(){
   openWaLink(phone, msg);
 }
 
-function sendNowLocal(id){
+async function sendNowLocal(id){
   const m = state.messages.find(x => x.id === id);
   if(!m) return;
+
   openWaLink(m.phoneNumber, m.messageContent);
-  m.status = 'SENT';
-  m.sentAt = new Date().toISOString();
+
+  if(state.useBackend){
+    try {
+      const response = await fetch(state.apiBase + '/api/messages/' + id + '/send-now', {method:'POST'});
+      if(!response.ok) throw new Error('HTTP ' + response.status);
+      const updated = await response.json();
+      Object.assign(m, updated);
+    } catch(error) {
+      log('Backend hand-off failed: ' + error.message, 'error');
+      toast('Backend error: ' + error.message, 'error');
+      return;
+    }
+  } else {
+    m.status = 'AWAITING_MANUAL';
+    m.errorMessage = 'Manual hand-off opened; delivery not verified.';
+  }
+
   renderMessages();
   updateStats();
-  log(`Sent #${id} via WhatsApp Web`, 'success');
-  toast('⚡ Opened in WhatsApp');
+  selectMessage(id);
+  log(`Manual WhatsApp hand-off opened for message #${id}; delivery is unconfirmed.`, 'warn');
+  toast('WhatsApp opened. Complete the send manually; delivery is not verified.', 'warn');
 }
 
 function quickSend(){
@@ -1200,8 +1227,8 @@ function openWaLink(phone, msg){
   const link = generateWaLink(phone, msg);
   document.getElementById('wa-link-url').href = link;
   document.getElementById('wa-link-bar').style.display = 'block';
-  window.open(link, '_blank');
-  log(`Opening WhatsApp → +${phone}`, 'success');
+  window.open(link, '_blank', 'noopener');
+  log(`Opening WhatsApp for manual hand-off → +${phone}`, 'warn');
 }
 
 function cancelMsg(id){
@@ -1225,14 +1252,15 @@ function scheduleLocalCheck(){
 }
 
 function checkDueMessages(){
+  if(state.useBackend) return;
   const now = new Date();
   state.messages.forEach(m => {
     if(m.status === 'PENDING' && new Date(m.scheduledAt) <= now){
-      log(`AUTO: Firing scheduled message #${m.id} → +${m.phoneNumber}`, 'warn');
-      toast(`⚡ Auto-sending to +${m.phoneNumber}`, 'warn');
+      log(`Manual hand-off required for message #${m.id} → +${m.phoneNumber}`, 'warn');
+      toast(`WhatsApp hand-off required for +${m.phoneNumber}`, 'warn');
       openWaLink(m.phoneNumber, m.messageContent);
-      m.status = 'SENT';
-      m.sentAt = now.toISOString();
+      m.status = 'AWAITING_MANUAL';
+      m.errorMessage = 'Manual hand-off opened; delivery not verified.';
     }
   });
   renderMessages();
@@ -1245,7 +1273,7 @@ function checkDueMessages(){
 function updateStats(){
   const msgs = state.messages;
   document.getElementById('stat-total').textContent = msgs.length;
-  document.getElementById('stat-pending').textContent = msgs.filter(m=>m.status==='PENDING').length;
+  document.getElementById('stat-pending').textContent = msgs.filter(m=>m.status==='PENDING' || m.status==='AWAITING_MANUAL').length;
   document.getElementById('stat-sent').textContent = msgs.filter(m=>m.status==='SENT').length;
   document.getElementById('stat-failed').textContent = msgs.filter(m=>m.status==='FAILED').length;
 }
@@ -1365,15 +1393,16 @@ function animateConnecting(){
 }
 
 function manualConfirm(){
-  const phone = prompt('Enter your WhatsApp phone number (with country code, no +):') || '34600000000';
-  confirmSession(phone);
+  const phone = prompt('Demo only: enter a display phone number (with country code, no +):');
+  if(!phone || !phone.trim()) return;
+  confirmSession(phone.trim());
   closeModal('modal-connect');
 }
 
 function confirmSession(phone){
-  updateSessionUI({ status: 'CONNECTED', phoneNumber: phone, connectedAt: new Date().toISOString() });
-  log(`WhatsApp connected: +${phone}`, 'success');
-  toast('✓ WhatsApp connected!');
+  updateSessionUI({ status: 'SIMULATED', phoneNumber: phone, connectedAt: new Date().toISOString() });
+  log(`Simulated session only for +${phone}; no WhatsApp account is connected.`, 'warn');
+  toast('Demo state only. No WhatsApp session was established.', 'warn');
 }
 
 function disconnectSession(){
@@ -1385,7 +1414,8 @@ function disconnectSession(){
 function openSimModal(){ document.getElementById('modal-simulate').classList.add('open'); }
 
 function simulateConnect(){
-  const phone = document.getElementById('sim-phone').value.trim() || '34600000000';
+  const phone = document.getElementById('sim-phone').value.trim();
+  if(!phone){ toast('Enter a display phone number for the demo.', 'error'); return; }
   confirmSession(phone);
   closeModal('modal-simulate');
   scheduleLocalCheck();
