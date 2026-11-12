@@ -1,66 +1,67 @@
-# CyberSend | WhatsApp Scheduler
+# CyberSend · WhatsCron
 
-[![Java CI](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml) [![GitHub Pages](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml)
+A scheduling prototype for composing messages, managing a local queue and generating `wa.me` links for manual sending.
 
-Aplicación experimental para planificar mensajes, gestionar una cola local y generar enlaces `wa.me` para completar manualmente el envío.
+<p align="center">
+  <a href="https://tzayadet.github.io/Cybersend-WhatsCron/"><img src="https://img.shields.io/badge/STATIC_DEMO-OPEN-00a86b?style=flat-square" alt="Static demo"></a>
+  <a href="https://github.com/tzayadet/Cybersend-WhatsCron"><img src="https://img.shields.io/badge/SOURCE-GITHUB-161b22?style=flat-square&logo=github" alt="Source"></a>
+</p>
 
-**Demo estática:** [CyberSend Scheduler](https://tzayadet.github.io/Cybersend-WhatsCron/) · **Código:** [repositorio](https://github.com/tzayadet/Cybersend-WhatsCron)
+[![Java CI](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/java-ci.yml) · [![Static deployment](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml/badge.svg)](https://github.com/tzayadet/Cybersend-WhatsCron/actions/workflows/static.yml)
 
-La demo pública presenta la interfaz HTML. No ejecuta el backend Spring Boot ni conecta con WhatsApp.
+> Prototype status: it does not send messages automatically through WhatsApp. Scheduled items requiring delivery move to `AWAITING_MANUAL` and generate a link for a person to complete the action.
 
-## Estado real
+## Components
 
-**Prototipo local. No realiza envíos automáticos a WhatsApp.** Los mensajes que llegan a su hora pasan a `AWAITING_MANUAL`, se abre un enlace `wa.me` y nunca se contabilizan como enviados sin un proveedor real que confirme la entrega.
+- **Static frontend:** browser interface and manual `wa.me` link generation.
+- **Spring Boot backend:** local H2 persistence, REST API and WebSocket updates.
+- **Messaging integration:** not implemented. No WhatsApp Web or WhatsApp Business Platform transport is connected.
 
-El backend Spring Boot mantiene mensajes programados y expone una API REST/WebSocket. La integración de transporte con WhatsApp no está implementada. La sesión y el QR son simulados. El sistema no debe marcar un mensaje como entregado: cuando no existe un proveedor real, conserva el estado pendiente y genera un enlace para que una persona complete el envío.
+The public Pages demo is a static interface. It does not run the Spring Boot backend or connect to WhatsApp.
 
-## Modos
+## Requirements
 
-- **Frontend HTML:** interfaz de navegador y generación de enlaces manuales.
-- **Backend Spring Boot:** persistencia H2, API y notificaciones WebSocket para el prototipo.
-- **Integración real:** pendiente. Requiere implementar un proveedor autorizado, preferiblemente WhatsApp Business Platform, con credenciales y webhooks gestionados fuera del repositorio.
+- Java 17 or later
+- Maven 3.8 or later
 
-## Requisitos
-
-- Java 17+
-- Maven 3.8+
-
-## Ejecución local
-
-Requiere Java 17 y Maven 3.8 o superior. El backend sigue la estructura estándar de Maven (`src/main/java`).
+## Run locally
 
 ```bash
 mvn spring-boot:run
 ```
 
-Para compilar y ejecutar las pruebas:
+The backend listens on `127.0.0.1:8080` by default.
+
+Run verification:
 
 ```bash
 mvn --batch-mode verify
 ```
 
-Por defecto, el servidor escucha en `127.0.0.1:8080`. No lo expongas a Internet: las rutas de gestión todavía no tienen un sistema completo de autenticación y autorización.
+## Configuration
 
-## Configuración
+Relevant environment variables include:
 
-Las variables configurables incluyen:
+- `PORT`: local server port.
+- `SERVER_ADDRESS`: bind address.
+- `DATABASE_URL`: H2 JDBC URL.
+- `DB_USER` and `DB_PASSWORD`: local database credentials.
+- `H2_CONSOLE_ENABLED`: H2 console toggle.
+- `CORS_ALLOWED_ORIGINS`: permitted frontend origins.
 
-- `PORT`: puerto local (8080).
-- `SERVER_ADDRESS`: dirección de escucha (127.0.0.1).
-- `DATABASE_URL`: URL JDBC de H2 local.
-- `DB_USER` y `DB_PASSWORD`: credenciales de la base de datos.
-- `H2_CONSOLE_ENABLED`: consola H2 (desactivada por defecto).
-- `CORS_ALLOWED_ORIGINS`: orígenes permitidos cuando se implemente el frontend separado.
+## Scope and limitations
 
-## Limitaciones conocidas
+- No real WhatsApp integration is present.
+- Session and QR states are simulated; the QR graphic is not scannable.
+- No delivery or read receipt is guaranteed.
+- Messages requiring human action remain `AWAITING_MANUAL`.
+- The API is a prototype and must not be exposed publicly without authentication, authorization and appropriate request protections.
+- Local H2 storage is not a multi-user or high-availability database.
 
-- No hay integración real con WhatsApp Web ni con WhatsApp Business Platform.
-- El estado de sesión se marca como `SIMULATED`; el QR de la interfaz es un patrón visual de demostración, no un código escaneable.
-- La API no debe desplegarse en redes públicas hasta implementar autenticación, autorización y protección CSRF donde corresponda. CORS y WebSocket aceptan únicamente los orígenes definidos en `CORS_ALLOWED_ORIGINS`.
-- El planificador no proporciona garantías de entrega ni confirmación de lectura. Los estados `SENT` solo se reservan para un envío confirmado por un proveedor real.
-- Los mensajes que requieren intervención humana pasan a `AWAITING_MANUAL` y dejan de reintentarse automáticamente cada 30 segundos.
-- Los datos locales H2 no son una solución multiusuario ni de alta disponibilidad.
+## Deployment
 
-## Licencia
+GitHub Pages publishes the static frontend only. A deployed backend would require a separate Java hosting environment and a properly authorised messaging provider integration.
 
-MIT. Consulta [LICENSE](LICENSE).
+## License
+
+MIT. See [LICENSE](LICENSE).
