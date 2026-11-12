@@ -120,18 +120,9 @@ public class WhatsAppService {
     public boolean sendMessage(String phoneNumber, String message) {
         WhatsAppSession session = getSession();
 
-        if (session.getStatus() == WhatsAppSession.SessionStatus.CONNECTED) {
-            // Production: call Node.js bridge
-            // return callNodeBridge(phoneNumber, message);
-            log.info("Sending message to {} via active session: {}", phoneNumber,
-                    message.substring(0, Math.min(50, message.length())) + "...");
-            session.setLastActive(LocalDateTime.now());
-            sessionRepository.save(session);
-            return true; // Simulate success
-        }
-
-        // Fallback: wa.me deep link (opens WhatsApp Web / app)
-        log.info("No active session. Fallback wa.me link for: {}", phoneNumber);
+        // A CONNECTED database flag is not proof that a WhatsApp transport exists.
+        // Until an authenticated provider bridge is configured, never report SENT.
+        log.info("No delivery provider configured; manual WhatsApp hand-off required.");
         return false;
     }
 
